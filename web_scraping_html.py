@@ -16,8 +16,8 @@ class Pagina_segunda_mano():
 
     def generar_pagina(self, delegacion, ciudad='cdmx', tipo = 'venta', inmueble = 'departamento'):
         raiz = 'https://www.segundamano.mx/anuncios'
-        ciudades = {'cdmx':'ciudad-de-mexico', 'ciudad de mexico':'ciudad-de-mexico'}
-        delegaciones = {'benito juarez':'benito-juarez', 'iztacalco':'iztacalco', 'azcapotzalco':'azcapotzalco', 'cuauhtemoc':'cuauhtemoc','coyoacan':'coyoacan', 'alvaro obregon' : 'alvaro-obregon', 'cuajimalpa de morelos' : 'cuajimalpa-de-morelos', 'gustavo a madero':'gustavo-a-madero', 'iztapalapa':'iztapalapa', 'la magdalena contreras' : 'la-magdalena-contreras', 'miguel hidalgo':'miguel-hidalgo', 'milpa alta':'milpa-alta', 'tlahuac':'tlahuac', 'tlalpan':'tlalpan', 'venustiano carranza':'venustiano-carranza', 'xochimilco':'xochimilco'}
+        ciudades = {'cdmx':'ciudad-de-mexico', 'ciudad_de_mexico':'ciudad-de-mexico'}
+        delegaciones = {'benito_juarez':'benito-juarez', 'iztacalco':'iztacalco', 'azcapotzalco':'azcapotzalco', 'cuauhtemoc':'cuauhtemoc','coyoacan':'coyoacan', 'alvaro_obregon' : 'alvaro-obregon', 'cuajimalpa_de_morelos' : 'cuajimalpa-de-morelos', 'gustavo_a_madero':'gustavo-a-madero', 'iztapalapa':'iztapalapa', 'la_magdalena_contreras' : 'la-magdalena-contreras', 'miguel_hidalgo':'miguel-hidalgo', 'milpa_alta':'milpa-alta', 'tlahuac':'tlahuac', 'tlalpan':'tlalpan', 'venustiano_carranza':'venustiano-carranza', 'xochimilco':'xochimilco'}
         tipo_ = {'venta':'venta-inmuebles','renta':'renta-inmuebles'}
         inmuebles = {'departamento':'departamentos', 'casa':'casas'}
         self.url = '/'.join([raiz, ciudades[ciudad.lower()], delegaciones[delegacion.lower()], tipo_[tipo.lower()], inmuebles[inmueble.lower()]])
@@ -27,13 +27,24 @@ class Pagina_segunda_mano():
         especificaciones_ = []
         for especificacion in especificaciones:
           if especificaciones[especificacion] != 0 and especificaciones[especificacion] != '':
-            if especificacion == 'precio' and (precio_menor < 0 or precio_mayor <= 0 or precio_mayor - precio_menor <= 0):
-              continue
+            if especificacion == 'precio':
+                if (precio_menor < 0 or precio_mayor < 0):
+                    continue
+                elif precio_menor*precio_mayor == 0 and not(precio_mayor == precio_menor):
+                    if precio_mayor == 0:
+                        precio_mayor = ''
+                    elif precio_menor == 0:
+                        precio_menor = ''
+                    especificaciones['precio'] = '{}-{}'.format(precio_menor, precio_mayor)
+                    especificaciones_.append('{}={}'.format(especificacion,especificaciones[especificacion]))
+                    continue
+                elif precio_mayor - precio_menor <= 0:
+                    continue
             elif type(especificaciones[especificacion]) == int and especificacion != 'habitaciones':
               especificaciones[especificacion] += 1
             especificaciones_.append('{}={}'.format(especificacion,especificaciones[especificacion]))
         self.url += '?inmobiliaria=0&'+'&'.join(especificaciones_)
-        print('Se agregaron características a la busqueda')
+        #print('Se agregaron características a la busqueda')
     
     def get_urls_publicaciones(self):
         try:
@@ -69,9 +80,11 @@ class Pagina_segunda_mano():
                         num_pagina += 1
                     else:
                         if urls_encontradas > 0:
-                            print('Se encontraron {} nuevas publicaciones en {} páginas.'.format(urls_encontradas, num_pagina - 1))
+                            #print('Se encontraron {} nuevas publicaciones en {} páginas.'.format(urls_encontradas, num_pagina - 1))
+                            pass
                         else:
-                            print('No se encontraron publicaciones nuevas')
+                            #print('No se encontraron publicaciones nuevas')
+                            pass
                         break
             return self.urls_publicaciones
             

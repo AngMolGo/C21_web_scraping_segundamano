@@ -15,10 +15,19 @@ import csv
 
 class Searcher():
     def __init__(self):
-        self.driver = webdriver.Edge(r"msedgedriver.exe")
-        self.driver.maximize_window()
-        sleep(2)
-        self.driver.get('https://www.segundamano.mx/')
+        #drivers = [webdriver.Chrome,webdriver.Opera]
+        try:
+            try:
+                self.driver = webdriver.Edge(r"msedgedriver.exe")
+            except Exception as e:
+                print(e)
+                self.driver = webdriver.Chrome(r"chromedriver.exe")
+            finally:
+                self.driver.maximize_window()
+                sleep(2)
+                self.driver.get('https://www.segundamano.mx/')
+        except:
+            print("Hubo un error al momento de inicializar el webdriver")
         
     def iniciar_sesion_segunda_mano(self):
         ### Este método se tiene que actualizar cada cierto tiempo
@@ -38,7 +47,7 @@ class Searcher():
             acceder.click()
             
             sleep(4)
-            print('Se inició sesión')
+            #print('Se inició sesión')
         except:
             print('Hubo un error al iniciar sesión en segunda mano, contacte con el administrador.')
             
@@ -50,25 +59,24 @@ class Searcher():
                 datos_de_anuncio = {'ID':'',
                                     'ubicacion':'',
                                     'telefono':'',
-                                    'notas':'-',
                                     'descripcion':'',
                                     'publicado':'',
                                     'url':url,
                                     'input_date':'',
                                     'nombre_vendedor':'',
                                     'publicaciones_del_vendedor':'',
+                                    'precio':'',
                                     'habitaciones':'',
                                     'banos':'',
                                     'estacionamiento':''}
                 try:
                     self.driver.get(url)
-                    sleep(1)
-                    print('\n',url)
+                    #print('\n',url)
                     
                     try:
                         telefono = WebDriverWait(self.driver, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#av-Sidebar > div.av-AdReplay > div > div.av-AdReply_UserData > div.phoneContainer > div > span')))
                     except:
-                        print('No existe telefono\n\n')
+                        #print('No existe telefono\n\n')
                         buscados.append([url])
                         continue
                     
@@ -80,7 +88,7 @@ class Searcher():
                             categoria = descripciones_children[num_child].text[:-1]
                             valor = descripciones_children[num_child + 1].text
                             descripciones[categoria] = valor
-                        print(descripciones)
+                        #print(descripciones)
                     except:
                         print('Hubo un error al buscar la información completa')
                     
@@ -109,19 +117,27 @@ class Searcher():
                     
                     ID = url.split('-')[-1]
                     datos_de_anuncio['ID'] = ID
-                    print('ID: ', ID)
+                    #print('ID: ', ID)
                     
                     telefono =str(telefono.text)
-                    print('Teléfono:', telefono)
+                    #print('Teléfono:', telefono)
                     datos_de_anuncio['telefono'] = telefono
 
                     descripcion =str(descripcion.text).replace('\n','')
-                    print('Descripción:', descripcion)
+                    #print('Descripción:', descripcion)
                     datos_de_anuncio['descripcion'] = descripcion
                     
-                    datos_de_anuncio['input_date'] = time.strftime('%d/%m/%y')
+                    try:
+                        try:
+                            precio = WebDriverWait(self.driver, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#av-Sidebar > div.av-AdSummary > div > div.summaryInfo > div > span.av-AdPrice')))
+                        except:
+                            precio = WebDriverWait(self.driver, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#av-Sidebar > div.av-AdSummary > div > div.summaryInfo > div > span.av-AdPrice.price-dop')))
+                        precio = str(precio.text)
+                        datos_de_anuncio['precio'] = precio
+                    except:
+                        pass
                     
-                    datos_de_anuncio['notas'] = '¡Nuevo anuncio!'
+                    datos_de_anuncio['input_date'] = time.strftime('%d/%m/%y')
                     
                     try:
                         seccion = WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#av-Sidebar > div.av-AdReplay > div > div.av-AdReply_UserData > div.av-AdReply_UserData-txt')))
@@ -135,7 +151,7 @@ class Searcher():
                             sleep(1)
                             name = WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#app > div.ma-main_ContainerProfile > div > div > div.profile-info > div.profile-info-personal > div.user > div.name')))
                             str_name = str(name.text)
-                        print('Nombre:', str_name)
+                        #print('Nombre:', str_name)
                         datos_de_anuncio['nombre_vendedor'] = str_name
                         num_publicaciones =  WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#app > div.ma-main_ContainerProfile > div > div > div.profile-ads > p')))
                         str_num = str(num_publicaciones.text).split()[0]
@@ -143,13 +159,13 @@ class Searcher():
                             sleep(1)
                             num_publicaciones =  WebDriverWait(self.driver, 1).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#app > div.ma-main_ContainerProfile > div > div > div.profile-ads > p')))
                             str_num = str(num_publicaciones.text).split()[0]
-                        print('Número de publicaciones:', str_num)
+                        #print('Número de publicaciones:', str_num)
                         datos_de_anuncio['publicaciones_del_vendedor'] = str_num
                     except:
                         print('No se pudo leer algún dato del vendedor')
                     
                     datos.append(list(datos_de_anuncio.values()))
-                    print('\n\n')
+                    #print('\n\n')
                     ##av-Sidebar > div.av-AdReplay > div > div.av-AdReply_UserData > div.av-AdReply_UserData-txt > div.adTypeLabel > a
                     ### Ya que obtuvo los datos, escribimos la url en nuestro archivo de urls ya buscadas
                 except Exception as e:
@@ -163,4 +179,3 @@ class Searcher():
         
     def cerrar_ventana(self):
         self.driver.close()
-        
